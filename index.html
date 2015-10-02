@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Home of the Memes</title>
+        <meta charset="utf-8">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+        <style>
+            @media (min-width: 768px) {
+                .container {
+                    max-width: 730px;
+                }
+            }
+            .header {
+                margin-top: 30px;
+                border-bottom: 1px solid #EEE;
+            }
+            .header h2 {
+                margin-top: 0;
+                line-height: 40px;
+            }
+            #stage {
+                padding: 15px;
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+        <script>
+        
+			var dbName = "imgurMemes";
+			var storeName = "pics";
+			var db = null;
+			
+			function startUp() {
+				openDB(function() {
+          			insertMemes();
+          		});
+        	};
+				
+			
+			function openDB() {
+                
+				var request = indexedDB.open(dbName);
+                
+				request.onerror = function(e) {
+					console.log("Error opening " + dbName);
+					console.dir(e);
+				};
+                
+				request.onsuccess = function(e) {
+					db = request.result;
+					console.log(dbName + " database was successfully created.");
+					console.dir(e);
+				};
+                
+				request.onupgradeneeded = function(e) {
+					event.target.result.createObjectStore(storeName, {autoIncrement: true});
+					console.log(storeName + " was added as an object store.");
+				};
+			}   
+			
+			function insertMemes() {
+				
+					var meme1 = {
+						"url": "http://i.imgur.com/TQlUqkQ.png",
+						"name": "gearsmem"
+					};
+                    
+                    var meme2 = {
+						"url": "http://i.imgur.com/KqJOVtf.png",
+						"name": "successmem"
+					};
+					
+					var meme3 = {
+						"url": "http://i.imgur.com/SM18jY7.png",
+						"name": "petamem"
+					};
+                    
+					var transaction = db.transaction(["pics"], "readwrite");
+					var store = transaction.objectStore("pics");
+					store.clear();
+					store.add(meme1);
+				    store.add(meme2);
+					store.add(meme3);
+                    
+					transaction.oncomplete = function(e) {
+						console.log("The following was added to " + storeName);
+						console.dir(meme1 + meme2 + meme3);
+					};
+			} 
+			
+			function randoMeme() {
+				console.log("\n[Query DB]");
+                
+				if (db) {
+                    
+					var transaction = db.transaction(["pics"], "readonly");
+					var store = transaction.objectStore("pics");
+					var memeArray = ["petamem","gearsmem","successmem"];
+					var queryInput = memeArray[Math.floor((Math.random() * 3))];
+					var objectStore = db.transaction("pics").objectStore("pics");
+					var request = objectStore.get();
+                    
+					request.onsuccess = function(e) {
+						console.log("Searching for " + queryInput);
+						console.dir(e.target.result);
+						$('#memeBox').attr("src",e.target.result.url);
+					};
+                    
+					request.onerror = function(e) {
+						console.log("Query error:");
+						console.dir(e);
+					};
+				}
+				else {
+					console.log("Error: Open the DB first.");
+				}
+			}    
+        
+        
+        
+            function stageContent(content) {
+                $("#stage").html(content);
+            }
+            
+            function evaluatePath(path) {
+                // Clean up the endpoint
+                var request = path.split("/").pop();
+                
+                var intromeme = document.getElementById("intromeme");
+            	var advancedmeme = document.getElementById("advancedmeme");
+            	var homeme = document.getElementById("homeme");
+            	var memegen = document.getElementById("memegen");
+                
+                // Request the content
+                if (request == "introMeme") {
+                    document.title = "Intro Meme";
+                    intromeme.className = "active";
+                    advancedmeme.className = "";
+                    homeme.className = "";
+                    memegen.className = "";
+                    $.get("introMeme.html", stageContent);
+                }
+                else if (request == "advancedMeme") {
+                    document.title = "Advanced Meme";
+                    intromeme.className = "";
+                    advancedmeme.className = "active";
+                    homeme.className = "";
+                    memegen.className = "";
+                    $.get("advancedMeme.html", stageContent);
+                }
+                else if (request == "memeGen") {
+                    document.title = "Meme Generator";
+                    memegen.className = "active";
+                    intromeme.className = "";
+                    advancedmeme.className = "";
+                    homeme.className = "";
+                    $.get("memeGen.html", stageContent);
+                }
+                else {
+                    document.title = "Home of the Memes";
+                    intromeme.className = "";
+                    advancedmeme.className = "";
+                    homeme.className = "active";
+                    memegen.className = "";
+                    $.get("home.html", stageContent);
+                }
+            }
+            
+            
+            $(function(){
+                // Evaluate path to start
+                evaluatePath(location.pathname);
+                
+                // When a link is clicked...
+                $("nav[role=navigation] a").click(function(e) {
+                    // Don't follow its href
+                    e.preventDefault();
+                    
+                    // Instead remember its href
+                    var request = $(this).attr("href");
+                    
+                    // And add it to the browser's history
+                    history.pushState(null, null, request);
+                    
+                    // Then evaluate it
+                    evaluatePath(request);
+                    
+                });
+                
+                
+                // If the back button is pressed...
+                $(window).on("popstate", function() {
+                    evaluatePath(location.pathname);
+                });
+                
+                
+            });
+        </script>
+    </head>
+    <body onload="openDB()">
+        <div class="container">
+            
+            <!-- HEADER -->
+            <div class="header clearfix">
+                <nav role="navigation">
+                    <ul class="nav nav-pills pull-right">
+                        <li id="homeme"><a href="./">Home</a></li>
+                        <li id="intromeme"><a href="./introMeme">Intro Meme</a></li>
+                        <li id="advancedmeme"><a href="./advancedMeme">Advanced Meme</a></li>
+                        <li id="memegen"><a href="./memeGen">Meme Generator</a></li>
+                   </ul>
+                </nav>
+                <h2 class="text-muted">Robert's Land of Memes</h2>
+            </div>
+            
+            <!-- STAGE -->
+            <div id="stage"></div>
+            
+        </div>
+    </body>
+</html>
