@@ -1,0 +1,71 @@
+<html ng-app="todo">
+<head>
+	<title>Robert's Todo</title>
+	<style>
+		.done {
+				text-decoration: line-through;
+				color:#ccc;
+			   }
+	</style>
+	
+</head>
+<body>
+	<div ng-controller='todoController'>
+		<form name="frm" ng-submit="add()">
+			<input type="text" name="new" ng-model="newtodo" required />
+			<button ng-disabled="frm.$invalid">Go</button>
+		</form>
+		<button ng-click="clear()">Clear Completed</button>
+		<span>Tasks remaining: {{remaining()}}</span>
+		<ul>
+			<li ng-repeat="todo in $storage.todo">
+				<input type="checkbox" ng-model="todo.done" />
+				<span ng-class="{'done':todo.done}">{{todo.title}}</span>
+			</li>
+		</ul>
+	</div>
+	<script src="node_modules/angular/angular.min.js"></script>
+	<script src="https://rawgithub.com/gsklee/ngStorage/master/ngStorage.js"></script>
+	<script>
+		angular.module('todo',[
+			'ngStorage'
+		]).
+			controller('todoController',function($scope,$localStorage){
+				
+				$scope.$storage = $localStorage.$default({
+						"todo": [{
+							'title':'Build this app using local storage',
+						 	'done' : false
+					   	}]
+				})
+				
+				$scope.count = 0;
+								
+				$scope.$storage.todo.push({
+											'title':'Push it to the limit',
+						 					'done' : false	
+						 					})			
+				$scope.add = function(){
+					$scope.$storage.todo.push({'title':$scope.newtodo,'done':false})
+					$scope.newtodo = ''
+				}
+				
+				$scope.clear = function(){
+					$scope.$storage.todo = $scope.$storage.todo.filter(function(val){
+						return !val.done
+					})
+				
+				}
+				
+				$scope.remaining = function(){
+					var count = 0
+					angular.forEach($scope.$storage.todo, function(todo) {
+          				count += todo.done ? 0 : 1;
+        			});
+        			return count;
+        		}
+				
+					
+			})
+	</script>
+</body>
